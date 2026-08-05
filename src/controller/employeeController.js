@@ -1,28 +1,39 @@
-import employee from "../models/Employee.js";
+import Employee from "../models/Employee.js";
 import { uploadToCloudinary } from "../config/cloudinary.js";
 
 // creater the employee details
 
 export const createEmployee = async (req, res) => {
+  console.log(req.body);
+  console.log(req.file);
+
   try {
-    const data = { ...req.body };
-    delete data.inHistory;
-    delete data.outHistory;
-    if (req.file) data.image = await uploadToCloudinary(req.file.buffer);
-    const employees = await employee.create(data);
-    res.status(201).json({ success: true, employees });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    const employee = await Employee.create({
+      ...req.body,
+      photo: req.file ? req.file.filename : null,
+    });
+
+    res.status(201).json(employee);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
   }
 };
 
 // get all employee details
 export const getAllEmployees = async (req, res) => {
   try {
-    const employees = await employee.find();
-    res.status(200).json({ success: true, employees });
+    const employees = await Employee.find();
+
+    res.status(200).json({
+      success: true,
+      employees,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -45,7 +56,7 @@ export const updateEmployee = async (req, res) => {
     const data = { ...req.body };
     delete data.inHistory;
     delete data.outHistory;
-    if (req.file) data.image = await uploadToCloudinary(req.file.buffer);
+    if (req.file) data.photo = await uploadToCloudinary(req.file.buffer);
     const employees = await employee.findByIdAndUpdate(id, data, { new: true });
     if (!employees) {
       return res

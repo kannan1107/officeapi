@@ -49,23 +49,20 @@ const handleUpdates = (update) => {
 };
 
 // 1. Hook for .save() (Create)
-DotoSchema.pre("save", function (next) {
+DotoSchema.pre("save", async function () {
   handleUpdates(this);
-  next();
 });
 
 // 2. Hook for findOneAndUpdate
-DotoSchema.pre("findOneAndUpdate", function (next) {
+DotoSchema.pre("findOneAndUpdate", function () {
   const update = this.getUpdate();
   handleUpdates(update);
-  next();
 });
 
 // 3. Hook for updateOne
-DotoSchema.pre("updateOne", function (next) {
+DotoSchema.pre("updateOne", function () {
   const update = this.getUpdate();
   handleUpdates(update);
-  next();
 });
 
 const Doto = mongoose.model("Doto", DotoSchema);

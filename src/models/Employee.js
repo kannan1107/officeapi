@@ -46,11 +46,11 @@ const EmployeeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    blod: {
+    bloodgroup: {
       type: String,
       required: true,
     },
-    dob: {
+    dateofbirth: {
       type: Date,
       required: true,
     },
@@ -58,20 +58,13 @@ const EmployeeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    maritalstatus: {
-      type: String,
-      required: true,
-    },
-    adhar: {
+
+    adharnumber: {
       type: Number,
       required: true,
       unique: true,
     },
-    pan: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+
     currentaddress: {
       type: String,
       required: true,
@@ -84,10 +77,7 @@ const EmployeeSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    image: {
-      type: String,
-      required: true,
-    },
+
     id: {
       type: String,
       required: true,
@@ -96,7 +86,7 @@ const EmployeeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    offaddress: {
+    officeaddress: {
       type: String,
       required: true,
     },
@@ -104,7 +94,7 @@ const EmployeeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    redate: {
+    retirement: {
       type: Date,
       required: true,
     },
@@ -120,6 +110,8 @@ const EmployeeSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    avsecplace: { type: String, required: true },
+
     course: {
       type: String,
       required: true,
@@ -143,6 +135,16 @@ const EmployeeSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    photo: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      default: "employee",
+    },
+    courseplace: { type: String, required: true },
+    status: { type: String, default: "active" },
   },
   { timestamps: true },
 );

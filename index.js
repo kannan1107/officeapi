@@ -49,7 +49,7 @@ app.use("/api/chat", chatRouter);
 app.use("/api/doto", dotoRouter);
 app.use("/api/items", itemRouter);
 app.use("/api/stores", storeRouter);
-app.use("/api/employees", employeeRouter);
+app.use("/api/employee", employeeRouter);
 // Socket.io logic
 
 app.use(errorHandler);

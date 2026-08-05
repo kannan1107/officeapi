@@ -104,48 +104,48 @@ export const updateDoto = async (req, res) => {
     const { id } = req.params;
     const payload = { ...req.body };
 
-    if (payload.status !== undefined && payload.states === undefined) {
-      payload.states = payload.status;
-    }
-    if (payload.states !== undefined && payload.status === undefined) {
-      payload.status = payload.states;
-    }
-    if (payload.status !== undefined && payload.states !== undefined) {
-      payload.status = payload.status;
-      payload.states = payload.states;
-    }
-    if (payload.review !== undefined && payload.comment === undefined) {
-      payload.comment = payload.review;
-    }
-    if (payload.review !== undefined && payload.reviewStatus === undefined) {
-      payload.reviewStatus = "approved";
-      console.log(res);
+    // 1. Sync status and states in payload
+    if (payload.status !== undefined) payload.states = payload.status;
+    else if (payload.states !== undefined) payload.status = payload.states;
+
+    // 2. Handle review logic
+    if (payload.review !== undefined) {
+      if (payload.comment === undefined) {
+        payload.comment = payload.review;
+      }
+      if (payload.reviewStatus === undefined) {
+        payload.reviewStatus = "approved";
+      }
+      // console.log(res); // REMOVED: This causes crashes
     }
 
+    // 3. Find the document
     const doto = await Doto.findById(id);
     if (!doto) {
-      return res.status(404).json({ message: "Doto not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doto not found" });
     }
 
-    Object.assign(doto, payload);
-    if (doto.status !== undefined && doto.states === undefined) {
-      doto.states = doto.status;
-    }
-    if (doto.states !== undefined && doto.status === undefined) {
-      doto.status = doto.states;
-    }
-    if (doto.status !== undefined && doto.states !== undefined) {
-      doto.status = doto.status;
-      doto.states = doto.states;
-    }
+    // 4. Update the document
+    // Using Object.assign is fine, but Mongoose's .set() is often safer
+    doto.set(payload);
+
+    // 5. Ensure internal consistency before saving
+    if (doto.status !== undefined) doto.states = doto.status;
 
     await doto.save();
 
-    const updatedTask = normalizeDotoItem(doto);
+    // 6. Final normalization (Ensure this function is imported!)
+    const updatedTask =
+      typeof normalizeDotoItem === "function" ? normalizeDotoItem(doto) : doto;
+
     res.status(200).json({
       success: true,
       message: "Doto updated successfully",
       data: updatedTask,
+      // Note: sending the same data in 7 different keys is redundant,
+      // but keeping it to match your original structure
       task: updatedTask,
       item: updatedTask,
       messages: [updatedTask],
@@ -154,7 +154,15 @@ export const updateDoto = async (req, res) => {
       updatedTask,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update Error:", error);
+    console.error("Body:", req.body);
+    console.error("Params:", req.params);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack,
+    });
   }
 };
 
