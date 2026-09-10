@@ -138,6 +138,7 @@ export const verifyOtp = async (req, res) => {
 
   const token = generateToken({
     id: user._id,
+    name: user.name,
     role: user.role,
     deportment: user.deportment,
   });
