@@ -139,6 +139,28 @@ const userSchema = Schema(
     courseplace: {
       type: String,
     },
+    el: {
+      type: Number,
+    },
+    cl: {
+      type: Number,
+    },
+    sl: {
+      type: Number,
+    },
+    comfoff: {
+      type: Number,
+    },
+    leaves: [
+      {
+        type: { type: String },
+        from: { type: Date },
+        to: { type: Date },
+        reason: { type: String },
+        status: { type: String, default: "pending" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     status: {
       type: String,
       default: "active",

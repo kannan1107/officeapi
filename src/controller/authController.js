@@ -176,7 +176,7 @@ export const update = async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user.id,
     { name, email, password, role, phone, deportment },
-    { new: true },
+    { returnDocument: 'after' },
   );
   res.status(200).json({
     status: "success",

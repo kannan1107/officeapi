@@ -93,7 +93,11 @@ export const updateUserRole = async (req, res) => {
         message: "Role is required",
       });
     }
-    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    const user = await User.findByIdAndUpdate(
+      id,
+      { role },
+      { returnDocument: "after" },
+    );
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -139,9 +143,80 @@ export const getUserById = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password, role, phone, deportment } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      phone,
+      deportment,
+      el,
+      cl,
+      sl,
+      comfoff,
+    } = req.body;
 
-    const updateData = { name, email, role, phone };
+    const updateData = {
+      name,
+      email,
+      role,
+      phone,
+      deportment,
+      el,
+      cl,
+      sl,
+      comfoff,
+    };
+
+    // remove undefined fields so we don't overwrite existing values with undefined
+    Object.keys(updateData).forEach(
+      (k) => updateData[k] === undefined && delete updateData[k],
+    );
+
+    if (req.body.leaves !== undefined) {
+      const existingUser = await User.findById(id);
+      const oldLeaves = existingUser?.leaves || [];
+      const newLeaves = req.body.leaves;
+
+      // detect newly added leave
+      if (newLeaves.length > oldLeaves.length) {
+        const newLeave = newLeaves[newLeaves.length - 1];
+        const from = new Date(newLeave.from);
+        const to = new Date(newLeave.to);
+        const days = Math.max(
+          1,
+          Math.round((to - from) / (1000 * 60 * 60 * 24)) + 1,
+        );
+
+        // deduct from correct balance
+        const typeMap = {
+          earned: "el",
+          casual: "cl",
+          sick: "sl",
+          compoff: "comfoff",
+        };
+        const balanceKey = typeMap[newLeave.type];
+        if (balanceKey && existingUser[balanceKey] !== undefined) {
+          updateData[balanceKey] = Math.max(
+            0,
+            (existingUser[balanceKey] || 0) - days,
+          );
+        }
+
+        // send mail to admin
+        try {
+          await sendMail(
+            "kannanmarimuthu1107@gmail.com",
+            `Leave Application - ${existingUser.name}`,
+            `Employee: ${existingUser.name}\nEmail: ${existingUser.email}\nLeave Type: ${newLeave.type}\nFrom: ${from.toDateString()}\nTo: ${to.toDateString()}\nDays: ${days}\nReason: ${newLeave.reason}`,
+          );
+        } catch (mailErr) {
+          console.error("Leave mail failed:", mailErr.message);
+        }
+      }
+
+      updateData.leaves = newLeaves;
+    }
 
     if (password) {
       const salt = await bcrypt.genSalt(10);

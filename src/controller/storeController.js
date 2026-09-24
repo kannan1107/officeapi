@@ -30,7 +30,7 @@ export const getStoreById = async (req, res) => {
 
 export const updateStore = async (req, res) => {
     try {
-        const store = await Store.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const store = await Store.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after', runValidators: true });
         if (!store) return res.status(404).json({ success: false, message: "Store not found" });
         res.status(200).json({ success: true, store });
     } catch (error) {
@@ -113,7 +113,7 @@ export const updatePlace = async (req, res) => {
         const store = await Store.findByIdAndUpdate(
             req.params.id,
             { place, placeId },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 

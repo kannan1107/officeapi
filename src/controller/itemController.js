@@ -10,10 +10,6 @@ export const createItem = async (req, res) => {
 
     data.createdBy = { userId: req.user.id, name: req.user.name, role: req.user.role };
 
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-
-    // Multiple images
     const imageFiles = req.files?.images || [];
 
     if (imageFiles.length > 0) {
@@ -68,74 +64,40 @@ export const getItemById = async (req, res) => {
 };
 
 export const updateItem = async (req, res) => {
-    try {
-      const item = await Item.findById(req.params.id);
-  
-      if (!item) {
-        return res.status(404).json({
-          success: false,
-          message: "Item not found",
-        });
-      }
-  
-      const data = { ...req.body };
-  
-      delete data.inHistory;
-      delete data.outHistory;
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "Item not found" });
 
-      data.updatedBy = { userId: req.user.id, name: req.user.name, role: req.user.role };
+    // Strip readonly/internal fields sent from frontend
+    const { _id, id, __v, balance, inHistory, outHistory, createdAt, updatedAt, ...rest } = req.body;
+    const data = { ...rest };
 
-      console.log("UPDATE BODY:", req.body);
-      console.log("UPDATE FILES:", req.files);
-  
-      // New images
-      const imageFiles = req.files?.images || [];
-  
-      if (imageFiles.length > 0) {
-        const newImages = await Promise.all(
-          imageFiles.map((file) =>
-            uploadToCloudinary(file.buffer)
-          )
-        );
-  
-        data.images = [
-          ...(item.images || []),
-          ...newImages,
-        ];
-      }
-  
-      // New certificate
-      const certificateFiles =
-        req.files?.certificate || [];
-  
-      if (certificateFiles.length > 0) {
-        data.certificate = await uploadToCloudinary(
-          certificateFiles[0].buffer
-        );
-      }
-  
-      const updatedItem = await Item.findByIdAndUpdate(
-        req.params.id,
-        data,
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
-  
-      res.status(200).json({
-        success: true,
-        item: updatedItem,
-      });
-    } catch (error) {
-      console.error("UPDATE ITEM ERROR:", error);
-  
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+    data.updatedBy = { userId: req.user.id, name: req.user.name, role: req.user.role };
+
+    // Handle new image uploads (only when FormData is sent)
+    const imageFiles = req.files?.images || [];
+    if (imageFiles.length > 0) {
+      const newImages = await Promise.all(imageFiles.map((f) => uploadToCloudinary(f.buffer)));
+      data.image = [...(item.image || []), ...newImages];
     }
-  };
+
+    const certificateFiles = req.files?.certificate || [];
+    if (certificateFiles.length > 0) {
+      data.certificate = await uploadToCloudinary(certificateFiles[0].buffer);
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(
+      req.params.id,
+      data,
+      { returnDocument: 'after', runValidators: false }
+    );
+
+    res.status(200).json({ success: true, item: updatedItem });
+  } catch (error) {
+    console.error("UPDATE ITEM ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const deleteItem = async (req, res) => {
   try {
@@ -215,7 +177,7 @@ export const stockOut = async (req, res) => {
           },
         },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
     res.status(200).json({
       success: true,
